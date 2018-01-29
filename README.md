@@ -1,4 +1,4 @@
 # m2libcext.git
-Automatically generated README.md
+Extended Libc features for Monkey2 such as `Input`, `Printf`, `WaitKey`
 
-Latest releases @ http://hezkore.com/release
+![](http://hezkore.com/captures/M2libcext_979x512_u1517269835.png)

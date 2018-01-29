@@ -1,4 +1,4 @@
-' Extended libc
+' Monkey2 Libc extension
 ' By @Hezkore 2018
 ' https://github.com/Hezkore/m2libcext
 
