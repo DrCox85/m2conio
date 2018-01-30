@@ -1,0 +1,8 @@
+{
+	"module":"libc-ext",
+	"about":"StdC library extension",
+	"author":"Hezkore",
+	"version":"1.0.0",
+	"support":"http://hezkore.com",
+	"depends":[]
+}

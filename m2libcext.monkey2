@@ -1,60 +1,54 @@
+
 ' Monkey2 Libc extension
 ' By @Hezkore 2018
 ' https://github.com/Hezkore/m2libcext
 
-' Make sure you build this as the "Console" type
-' Ted2Go does not register any of this
-' So you'll need to run this from your 'products' folder
+Namespace m2libcext
 
-#Import "<std>"
 #Import "<libc>"
-Using std..
 Using libc..
 
 Extern
 	Function getc:Int( stream:FILE Ptr )
 Public
 
-Function Main()
+#rem monkeydoc Print but without a new line at the end.
+#end
+Function PrintNO( text:String )
 	
-	Print "Hello!"
-	
-	Local usrInput:String
-	While usrInput.Length<=0
-		Printf("Write something> ")
-		usrInput=Input()
-	Wend
-	
-	Printf("You wrote: ")
-	Print(usrInput)
-	
-	WaitKey()
-	Printf("Bye!")
-	Sleep(1)
-End
-
-Function Printf( text:String )
 	fputs( text, libc.stdout )
 	fflush( libc.stdout )
 End
 
+#rem monkeydoc Pause application until <Key> has been pressed.
+#end
 Function WaitKey( text:String="~nPress Return key to continue..." )
-	Printf(text)
+	
+	PrintNO(text)
+	
 	Local key:Int
 	fread( Varptr key, 1, 1, libc.stdin )
+	
 	Return
 End
 
+#rem monkeydoc Pause application and let the user input text.
+#end
 Function Input:String()
+	
 	Local inp:Int
 	Local result:String
 	
 	While True
+		
 		inp=getc( libc.stdin )
 		If inp Then
+			
 			If inp=10 Then
+				
 				Exit
 			Else
+				
 				result+=String.FromChar( inp )
 			Endif
 		Endif
