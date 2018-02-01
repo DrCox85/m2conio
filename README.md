@@ -1,7 +1,7 @@
 # m2libcext.git
 Extended Libc features for Monkey2 such as `Input`, `PrintNO`, `WaitKey`
 
-![](http://hezkore.com/captures/Test1_979x512_u1517430096.png)
+![](https://github.com/Hezkore/m2libcext/blob/master/tests/demo.png)
 
 ## Usage
 * Place 'm2libcext' in your Monkey2 'modules' folder
