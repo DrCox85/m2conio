@@ -14,11 +14,13 @@ Global Console:ConsoleHandler
 
 #If __TARGET__="windows"
 	#Import "<windows.h>"
+	#Import "<conio.h>"
 	Extern
 		Alias HANDLE:Void Ptr
 		Function SetConsoleMode( hConsoleHandle:HANDLE, dwMode:UInt )
 		Function GetStdHandle:HANDLE( nStdHandle:UInt )
 		Function GetLastError:UInt()
+		Function getch:Int()
 	Public
 #End
 
@@ -226,37 +228,68 @@ Struct ConsoleHandler
 			If _ansiChecked Then Return _supportsAnsi
 			_ansiChecked=True
 			
-			' Forced support? (AppArgs -fc)
+			Local printErrorCode:Bool
+			
+			' Force/Disable Ansi supprt?
 			For Local s:=Eachin AppArgs()
-				If s.ToLower()="-fc" Then
+				
+				' Force Ansi support
+				If s.ToLower()="-fa" Then
 					_supportsAnsi=True
 					Return _supportsAnsi
 				Endif
+				
+				' Disable Ansi support
+				If s.ToLower()="-da" Then
+					_supportsAnsi=False
+					Return _supportsAnsi
+				Endif
+				
+				' Print any Ansi error ode
+				If s.ToLower()="-pae" Then
+					printErrorCode=True
+				Endif
+				
 			Next
 			
 			' Attempt to get the STD handle...
 			Local hOut:=GetStdHandle( -11 )
 			If Int(hOut)=-1 Or GetLastError() Then
 				If verbose Then Print "Unable to get handle for this console"
+				If printErrorCode Then Print "Error Code: "+GetLastError()
 				_supportsAnsi=False
 				Return _supportsAnsi
 			Endif
 			
 			' Attempt to set the console mode...
 			SetConsoleMode( hOut, 5 )
+			
 			If GetLastError() Then
-				If GetLastError()=6 Then
-					If verbose Then Print "This console does not support color"
-					_supportsAnsi=False
-					Return _supportsAnsi
-				Else
-					If verbose Then Print "Unable to enable color on this console"
-					_supportsAnsi=False
-					Return _supportsAnsi
+				
+				' Not supported by default
+				_supportsAnsi=False
+				
+				Select GetLastError()
+					Case 6 ' Wasn't able to get the handle for Std Handle
+						If verbose Print "Unable to use the console handle. Ansi will not be supported"
+					Case 87 ' Usually happens on older Windows CMD
+						If verbose Print "This console is too old to support Ansi escape codes"
+					Case 1150 ' Seems to happen on things like ConEmu
+						' It still usually works, so force support
+						_supportsAnsi=True
+					Default ' No idea what happened
+						If verbose Print "Unable to enable Ansi escape codes on this console"
+				End
+				
+				' Do we print error code?
+				If Not _supportsAnsi And printErrorCode Then
+					Print "Error Code: "+GetLastError()
 				Endif
+				
+				Return _supportsAnsi
 			Endif
 			
-			' Colors are supported!
+			' Ansi supported!
 			ResetColors()
 			
 			_supportsAnsi=True
