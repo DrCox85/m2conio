@@ -4,12 +4,27 @@
 ' So you'll need to run this from your 'products' folder
 
 #Import "<std>"
+#Import "<m2conio>"
 Using std..
-
-#Import "../m2libcext"
-Using m2libcext..
+Using m2conio..
 
 Function Main()
+	
+	Local ms:Int=Millisecs()
+	
+	Print "REALLY LONG TIME Y'ALL! REALLY LONG TIME Y'ALL! REALLY LONG TIME Y'ALL! REALLY LONG TIME Y'ALL! REALLY LONG TIME Y'ALL! REALLY LONG TIME Y'ALL! REALLY LONG TIME Y'ALL! REALLY LONG TIME Y'ALL! REALLY LONG TIME Y'ALL! REALLY LONG TIME Y'ALL! "
+	Sleep(1)
+	
+'	Repeat
+'		If kbhit() Then
+'			Print "Key Hit:"+Console.GetKey()
+'		Else
+'			If ms+1000<Millisecs() Then
+'				ms=Millisecs()
+'				Print "Time: "+(ms/1000)
+'			Endif
+'		Endif
+'	Forever
 	
 	' Check if color is supported
 	Console.Write("Checking color support... ")

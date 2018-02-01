@@ -1,9 +1,9 @@
 
-' Monkey2 Terminal console
+' Monkey2 Console I/O module
 ' By @Hezkore 2018
 ' https://github.com/Hezkore/m2libcext
 
-Namespace m2libcext
+Namespace m2conio
 
 #Import "<std>"
 #Import "<libc>"
@@ -28,6 +28,7 @@ Global Console:ConsoleHandler
 #End
 
 Extern
+	Function kbhit:Int()
 	Function getch:Int()
 	Function getc:Int( stream:FILE Ptr )
 Public
@@ -60,6 +61,9 @@ Struct ConsoleHandler
 		
 	End
 	
+	#rem monkeydoc Text foreground color.
+	Uses Ansi coles.
+	#end
 	Property Foreground:Color()
 		Return _foreground
 	Setter( color:Color )
@@ -69,6 +73,8 @@ Struct ConsoleHandler
 		ApplyForeground()
 	End
 	
+	#rem monkeydoc Use bold/bright foreground colors.
+	#end
 	Property ForegroundBold:Bool()
 		Return _boldForeground
 	Setter( bold:Bool )
@@ -89,6 +95,9 @@ Struct ConsoleHandler
 	End
 	#end
 	
+	#rem monkeydoc Text background color.
+	Uses Ansi coles.
+	#end
 	Property Background:Color()
 		Return _background
 	Setter( color:Color )
@@ -98,6 +107,8 @@ Struct ConsoleHandler
 		ApplyBackground()
 	End
 	
+	#rem monkeydoc Use bold/bright background colors.
+	#end
 	Property BackgroundBold:Bool()
 		Return _boldBackground
 	Setter( bold:Bool )
@@ -107,6 +118,8 @@ Struct ConsoleHandler
 		ApplyBackground()
 	End
 	
+	#rem Are Ansi codes supported?
+	#end
 	Property SupportsAnsi:Bool()
 		
 		CheckAnsiSupport( False )
@@ -129,7 +142,7 @@ Struct ConsoleHandler
 	End
 	#end
 	
-	#rem monkeydoc Send raw ANSI color code.
+	#rem monkeydoc Send raw Ansi color code.
 	ESC[<color>m
 	#end
 	Method AnsiColor( color:UByte )
@@ -137,14 +150,14 @@ Struct ConsoleHandler
 		Ansi( "["+color+"m")
 	End
 	
-	#rem monkeydoc Send raw ANSI code.
+	#rem monkeydoc Send raw Ansi code.
 	#end
 	Method Ansi( code:String )
 		
 		fputs( String.FromChar(27)+code, libc.stdout )
 	End
 	
-	#rem monkeydoc Resets foreground and background color.
+	#rem monkeydoc Reset foreground and background color.
 	#end
 	Method ResetColors()
 		
@@ -152,7 +165,7 @@ Struct ConsoleHandler
 		ResetBackground()
 	End
 	
-	#rem monkeydoc Resets foreground color.
+	#rem monkeydoc Reset foreground color.
 	#end
 	Method ResetForeground()
 		
@@ -163,7 +176,7 @@ Struct ConsoleHandler
 		ApplyForeground()
 	End
 	
-	#rem monkeydoc Resets background color.
+	#rem monkeydoc Reset background color.
 	#end
 	Method ResetBackground()
 		
@@ -174,7 +187,7 @@ Struct ConsoleHandler
 	End
 	
 	#rem monkeydoc Write to the console.
-	nl parameter for appending new line.
+	'nl' parameter is for appending new line.
 	#end
 	Method Write( text:String, nl:Bool=False )
 		
@@ -185,6 +198,7 @@ Struct ConsoleHandler
 	End
 	
 	#rem monkeydoc Pause application until <Key> has been pressed.
+	Any key if key:int is -1
 	#end
 	Method WaitKey( text:String="~nPress any key to continue...~n", key:Int=-1 )
 		
@@ -200,7 +214,16 @@ Struct ConsoleHandler
 		Return
 	End
 	
+	#rem monkeydoc Returns true if a key was hit.
+	Use with GetKey() to determine what key was hit.
+	#end
+	Method KeyHit:Bool()
+		
+		Return kbhit()
+	End
+	
 	#rem monkeydoc Pause application and let the user input a key.
+	Can be used
 	#end
 	Method GetKey:Int()
 		
@@ -233,6 +256,7 @@ Struct ConsoleHandler
 	End
 	
 	#rem monkeydoc Make a bell sound.
+	Plays system warning sound.
 	#end
 	Method Bell()
 		fputs( String.FromChar(7), libc.stdout )
