@@ -230,22 +230,20 @@ Struct ConsoleHandler
 			
 			Local printErrorCode:Bool
 			
-			' Force/Disable Ansi supprt?
+			' Force/Disable Ansi support?
 			For Local s:=Eachin AppArgs()
 				
 				' Force Ansi support
 				If s.ToLower()="-fa" Then
 					_supportsAnsi=True
-					Return _supportsAnsi
 				Endif
 				
 				' Disable Ansi support
 				If s.ToLower()="-da" Then
 					_supportsAnsi=False
-					Return _supportsAnsi
 				Endif
 				
-				' Print any Ansi error ode
+				' Print any Ansi error code
 				If s.ToLower()="-pae" Then
 					printErrorCode=True
 				Endif
@@ -254,20 +252,15 @@ Struct ConsoleHandler
 			
 			' Attempt to get the STD handle...
 			Local hOut:=GetStdHandle( -11 )
+			
 			If Int(hOut)=-1 Or GetLastError() Then
 				If verbose Then Print "Unable to get handle for this console"
-				If printErrorCode Then Print "Error Code: "+GetLastError()
-				_supportsAnsi=False
-				Return _supportsAnsi
+			Else
+				' Attempt to set the console mode...
+				SetConsoleMode( hOut, 5 )
 			Endif
 			
-			' Attempt to set the console mode...
-			SetConsoleMode( hOut, 5 )
-			
 			If GetLastError() Then
-				
-				' Not supported by default
-				_supportsAnsi=False
 				
 				Select GetLastError()
 					Case 6 ' Wasn't able to get the handle for Std Handle
@@ -286,13 +279,12 @@ Struct ConsoleHandler
 					Print "Error Code: "+GetLastError()
 				Endif
 				
-				Return _supportsAnsi
+			Else
+				' Ansi supported!
+				_supportsAnsi=True
+				ResetColors()
 			Endif
 			
-			' Ansi supported!
-			ResetColors()
-			
-			_supportsAnsi=True
 			Return _supportsAnsi
 		End
 		
