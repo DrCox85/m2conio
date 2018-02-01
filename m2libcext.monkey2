@@ -15,16 +15,20 @@ Global Console:ConsoleHandler
 #If __TARGET__="windows"
 	#Import "<windows.h>"
 	#Import "<conio.h>"
+	
 	Extern
 		Alias HANDLE:Void Ptr
 		Function SetConsoleMode( hConsoleHandle:HANDLE, dwMode:UInt )
 		Function GetStdHandle:HANDLE( nStdHandle:UInt )
 		Function GetLastError:UInt()
-		Function getch:Int()
 	Public
+#Else
+	#Import "native/posix_input.h"
+	#Import "native/posix_input.cpp"
 #End
 
 Extern
+	Function getch:Int()
 	Function getc:Int( stream:FILE Ptr )
 Public
 
@@ -182,14 +186,25 @@ Struct ConsoleHandler
 	
 	#rem monkeydoc Pause application until <Key> has been pressed.
 	#end
-	Method WaitKey( text:String="~nPress Return key to continue..." )
+	Method WaitKey( text:String="~nPress any key to continue...~n", key:Int=-1 )
 		
 		Write(text)
 		
-		Local key:Int
-		fread( Varptr key, 1, 1, libc.stdin )
+		If key>=0 Then
+			Repeat 
+			Until GetKey()=key
+		Else
+			GetKey()
+		Endif
 		
 		Return
+	End
+	
+	#rem monkeydoc Pause application and let the user input a key.
+	#end
+	Method GetKey:Int()
+		
+		Return getch()
 	End
 	
 	#rem monkeydoc Pause application and let the user input text.

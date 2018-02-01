@@ -36,7 +36,7 @@ Function Main()
 	Local usrInput:String
 	While usrInput.Length<=0
 		
-		'Write does not append a new line at the end
+		' Write does not append a new line at the end
 		Console.Write("Write something> ")
 		
 		' Input in bold colors
@@ -54,21 +54,21 @@ Function Main()
 	
 	' In bold colors
 	Console.ForegroundBold=True
-	Console.Write(usrInput, True) 'With new line
+	Console.Write( usrInput, True ) 'With new line
 	Console.ForegroundBold=False
 	
 	Sleep(0.5)
 	
-	' Reset colors (and bold)
+	' Reset colors
 	Console.ResetColors()
 	
-	'Make a bell sound
+	' Make a bell sound
 	Console.Bell() 
 	
-	'Wait for the user to press return
+	' Wait for the user to press return
+	Console.WaitKey( "~nPress return to exit~n", 13 ) 
 	
-	Console.WaitKey() 
-	' Reset colors (and underline)
+	' Reset colors
 	Console.ResetColors()
 	
 	Console.Write("Bye!")
