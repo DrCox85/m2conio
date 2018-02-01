@@ -62,7 +62,7 @@ Struct ConsoleHandler
 	End
 	
 	#rem monkeydoc Text foreground color.
-	Uses Ansi coles.
+	Uses Ansi codes.
 	#end
 	Property Foreground:Color()
 		Return _foreground
@@ -74,6 +74,7 @@ Struct ConsoleHandler
 	End
 	
 	#rem monkeydoc Use bold/bright foreground colors.
+	Uses Ansi codes.
 	#end
 	Property ForegroundBold:Bool()
 		Return _boldForeground
@@ -96,7 +97,7 @@ Struct ConsoleHandler
 	#end
 	
 	#rem monkeydoc Text background color.
-	Uses Ansi coles.
+	Uses Ansi codes.
 	#end
 	Property Background:Color()
 		Return _background
@@ -108,6 +109,7 @@ Struct ConsoleHandler
 	End
 	
 	#rem monkeydoc Use bold/bright background colors.
+	Uses Ansi codes.
 	#end
 	Property BackgroundBold:Bool()
 		Return _boldBackground
@@ -118,7 +120,7 @@ Struct ConsoleHandler
 		ApplyBackground()
 	End
 	
-	#rem Are Ansi codes supported?
+	#rem Check for Ansi code support
 	#end
 	Property SupportsAnsi:Bool()
 		
@@ -187,7 +189,7 @@ Struct ConsoleHandler
 	End
 	
 	#rem monkeydoc Write to the console.
-	'nl' parameter is for appending new line.
+	Use 'nl' parameter for appending new line.
 	#end
 	Method Write( text:String, nl:Bool=False )
 		
@@ -223,14 +225,14 @@ Struct ConsoleHandler
 	End
 	
 	#rem monkeydoc Pause application and let the user input a key.
-	Can be used
+	Can be used with KeyHit() to remove pause.
 	#end
 	Method GetKey:Int()
 		
 		Return getch()
 	End
 	
-	#rem monkeydoc Pause application and let the user input text.
+	#rem monkeydoc Pause application and let the user input a line of text.
 	#end
 	Method Input:String()
 		
@@ -256,7 +258,7 @@ Struct ConsoleHandler
 	End
 	
 	#rem monkeydoc Make a bell sound.
-	Plays system warning sound.
+	Play system warning sound.
 	#end
 	Method Bell()
 		fputs( String.FromChar(7), libc.stdout )
