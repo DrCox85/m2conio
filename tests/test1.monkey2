@@ -11,21 +11,18 @@ Using m2libcext..
 
 Function Main()
 	
-	' NOTICE
-	Print "Most of these functions will NOT work in Ted2Go"
-	Print "Make sure you're running this via your 'products' folder~n"
+	' Check if color is supported
+	Console.Write("Checking color support... ")
 	
-	Console.Write("Checking color support...")
-	' Check if colors are supported
-	If Console.SupportsColor Then
-		Console.Negative() ' Swaps foreground and background colors
+	If Console.SupportsAnsi Then
 		Print "Yay, you can see the colors!"
-		Console.Positive() ' Returns foreground/background to normal
 	Else
-		Print "Aww, this console window doesn't support colors"
+		Print "Aww, this console window doesn't support color~n"
+		Print "Most of these functions will NOT work in Ted2Go"
+		Print "Make sure you're running this via your 'products' folder~n"
+		
 		#If __TARGET__="windows"
-			Print "Make sure you're not in a ~qLegacy Mode~q console"
-			Print "And that you've also updated Windows 10"
+			Print "And that you're not in a ~qLegacy Mode~q console"
 		#End
 	Endif
 	
@@ -64,9 +61,6 @@ Function Main()
 	
 	' Reset colors (and bold)
 	Console.ResetColors()
-	
-	' Add underline
-	Console.ForegroundUnderline=True
 	
 	'Make a bell sound
 	Console.Bell() 

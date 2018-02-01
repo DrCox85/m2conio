@@ -5,8 +5,10 @@
 
 Namespace m2libcext
 
+#Import "<std>"
 #Import "<libc>"
 Using libc..
+Using std.filesystem
 
 Global Console:ConsoleHandler
 
@@ -70,6 +72,7 @@ Struct ConsoleHandler
 		ApplyForeground()
 	End
 	
+	#rem Not often properly supported
 	Property ForegroundUnderline:Bool()
 		Return _underlineForeground
 	Setter( underline:Bool )
@@ -78,6 +81,7 @@ Struct ConsoleHandler
 		
 		ApplyForeground()
 	End
+	#end
 	
 	Property Background:Color()
 		Return _background
@@ -97,24 +101,41 @@ Struct ConsoleHandler
 		ApplyBackground()
 	End
 	
-	Property SupportsColor:Bool()
+	Property SupportsAnsi:Bool()
 		
-		CheckColorSupport( False )
-		Return _supportsColor
+		CheckAnsiSupport( False )
+		Return _supportsAnsi
 	End
 	
+	#Rem Hardly ever supported properly
 	Method Negative()
 		
 		CheckColorSupport()
 		
-		If _supportsColor Then Write(String.FromChar(27)+"[7m")
+		If _supportsColor Then AnsiColor( 7 )
 	End
 	
 	Method Positive()
 		
 		CheckColorSupport()
 		
-		If _supportsColor Then Write(String.FromChar(27)+"[27m")
+		If _supportsColor Then AnsiColor( 27 )
+	End
+	#end
+	
+	#rem monkeydoc Send raw ANSI color code.
+	ESC[<color>m
+	#end
+	Method AnsiColor( color:UByte )
+		
+		Ansi( "["+color+"m")
+	End
+	
+	#rem monkeydoc Send raw ANSI code.
+	#end
+	Method Ansi( code:String )
+		
+		fputs( String.FromChar(27)+code, libc.stdout )
 	End
 	
 	#rem monkeydoc Resets foreground and background color.
@@ -146,10 +167,13 @@ Struct ConsoleHandler
 		ApplyBackground()
 	End
 	
-	#rem monkeydoc Print without a new line at the end.
+	#rem monkeydoc Write to the console.
+	nl parameter for appending new line.
 	#end
 	Method Write( text:String, nl:Bool=False )
+		
 		If nl Then text=text+"~n"
+		
 		fputs( text, libc.stdout )
 		fflush( libc.stdout )
 	End
@@ -198,16 +222,24 @@ Struct ConsoleHandler
 	End
 	
 	Private
-		Method CheckColorSupport:Bool( verbose:Bool=True )
-			If _doneSupportColorTest Then Return _supportsColor
-			_doneSupportColorTest=True
+		Method CheckAnsiSupport:Bool( verbose:Bool=True )
+			If _ansiChecked Then Return _supportsAnsi
+			_ansiChecked=True
+			
+			' Forced support? (AppArgs -fc)
+			For Local s:=Eachin AppArgs()
+				If s.ToLower()="-fc" Then
+					_supportsAnsi=True
+					Return _supportsAnsi
+				Endif
+			Next
 			
 			' Attempt to get the STD handle...
 			Local hOut:=GetStdHandle( -11 )
 			If Int(hOut)=-1 Or GetLastError() Then
 				If verbose Then Print "Unable to get handle for this console"
-				_supportsColor=False
-				Return _supportsColor
+				_supportsAnsi=False
+				Return _supportsAnsi
 			Endif
 			
 			' Attempt to set the console mode...
@@ -215,37 +247,38 @@ Struct ConsoleHandler
 			If GetLastError() Then
 				If GetLastError()=6 Then
 					If verbose Then Print "This console does not support color"
-					_supportsColor=False
-					Return _supportsColor
+					_supportsAnsi=False
+					Return _supportsAnsi
 				Else
 					If verbose Then Print "Unable to enable color on this console"
-					_supportsColor=False
-					Return _supportsColor
+					_supportsAnsi=False
+					Return _supportsAnsi
 				Endif
 			Endif
 			
 			' Colors are supported!
 			ResetColors()
 			
-			_supportsColor=True
-			Return _supportsColor
+			_supportsAnsi=True
+			Return _supportsAnsi
 		End
 		
 		Method ApplyForeground()
 			
-			CheckColorSupport()
+			CheckAnsiSupport()
 			
-			If _supportsColor Then
-				If _boldForeground And _foreground.id>=30 And _foreground.id<38 Then
-					Write(String.FromChar(27)+"["+(_foreground.id+60)+"m")
-				Else
-					Write(String.FromChar(27)+"["+_foreground.id+"m")
-				Endif
+			If _supportsAnsi Then
 				
 				If _underlineForeground Then
-					Write(String.FromChar(27)+"[4m")
+					AnsiColor( 4 )
 				Else
-					Write(String.FromChar(27)+"[24m")
+					AnsiColor( 24 )
+				Endif
+				
+				If _boldForeground And _foreground.id>=30 And _foreground.id<38 Then
+					AnsiColor( _foreground.id+60 )
+				Else
+					AnsiColor( _foreground.id )
 				Endif
 				
 			Endif
@@ -253,13 +286,13 @@ Struct ConsoleHandler
 		
 		Method ApplyBackground()
 			
-			CheckColorSupport()
+			CheckAnsiSupport()
 			
-			If _supportsColor Then
+			If _supportsAnsi Then
 				If _boldBackground And _background.id>=30 And _background.id<38 Then
-					Write(String.FromChar(27)+"["+(_background.id+70)+"m")
+					AnsiColor( _background.id+70 )
 				Else
-					Write(String.FromChar(27)+"["+(_background.id+10)+"m")
+					AnsiColor( _background.id+10 )
 				Endif
 			Endif
 		End
@@ -270,8 +303,8 @@ Struct ConsoleHandler
 		Field _background:Color
 		Field _boldBackground:Bool
 		
-		Field _supportsColor:Bool
-		Field _doneSupportColorTest:Bool
+		Field _supportsAnsi:Bool
+		Field _ansiChecked:Bool
 		
 	Public
 End
