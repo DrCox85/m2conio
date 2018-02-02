@@ -91,11 +91,6 @@ Struct ConsoleHandler
 		Mode=$101+$80,AudioNext,AudioPrev,AudioStop,AudioPlay,AudioMute,MediaSelect,WWW,Mail,Calculator,Computer
 		ACSearch,ACHome,ACBack,ACForward,ACStop,ACRefresh,ACBookmarks
 		BrightnessDown,BrightnessUp,DisplaySwitch,IllumToggle,IllumDown,IllumUp,Eject,Sleep
-		
-		Max
-		
-		Raw=$10000
-		
 	End
 	
 	#rem monkeydoc Text foreground color.
