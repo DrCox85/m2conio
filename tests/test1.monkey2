@@ -65,7 +65,7 @@ Function Main()
 	Console.Bell() 
 	
 	' Wait for the user to press return
-	Console.WaitKey( "~nPress return to exit~n", 13 ) 
+	Console.WaitKey( "~nPress return to exit~n", Console.Key.Enter ) 
 	
 	' Reset colors
 	Console.ResetColors()

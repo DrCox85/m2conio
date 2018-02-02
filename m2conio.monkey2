@@ -61,6 +61,43 @@ Struct ConsoleHandler
 		
 	End
 	
+	Enum Key
+		Any=-1
+	
+		Backspace=8,Tab
+		Enter=13
+		Escape=27
+		Space=32
+		Apostrophe=39
+		Comma=44,Minus,Period,Slash
+		Key0=48,Key1,Key2,Key3,Key4,Key5,Key6,Key7,Key8,Key9
+		Semicolon=59
+		Equals=61
+		A=65,B,C,D,E,F,G,H,I,J,K,L,M,N,O,P,Q,R,S,T,U,V,W,X,Y,Z
+		LeftBracket=91,Backslash,RightBracket
+		Backquote=96
+		a=97,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t,u,v,w,x,y,z
+		KeyDelete=127
+		
+		CapsLock=185,F1,F2,F3,F4,F5,F6,F7,F8,F9,F10,F11,F12
+		PrintScreen,ScrollLock,Pause,Insert,Home,PageUp,nop,KeyEnd,PageDown
+		Right,Left,Down,Up
+		KeypadNumLock,KeypadDivide,KeypadMultiply,KeypadMinus,KeypadPlus,KeypadEnter
+		Keypad1,Keypad2,Keypad3,Keypad4,Keypad5,Keypad6,Keypad7,Keypad8,Keypad9,Keypad0
+		KeypadPeriod
+		
+		LeftControl=$e0+$80,LeftShift,LeftAlt,LeftGui,RightControl,RightShift,RightAlt,RightGui
+		
+		Mode=$101+$80,AudioNext,AudioPrev,AudioStop,AudioPlay,AudioMute,MediaSelect,WWW,Mail,Calculator,Computer
+		ACSearch,ACHome,ACBack,ACForward,ACStop,ACRefresh,ACBookmarks
+		BrightnessDown,BrightnessUp,DisplaySwitch,IllumToggle,IllumDown,IllumUp,Eject,Sleep
+		
+		Max
+		
+		Raw=$10000
+		
+	End
+	
 	#rem monkeydoc Text foreground color.
 	Uses Ansi codes.
 	#end
