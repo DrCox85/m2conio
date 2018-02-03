@@ -1,7 +1,6 @@
-
 ' Monkey2 Console I/O module
 ' By @Hezkore 2018
-' https://github.com/Hezkore/m2libcext
+' https://github.com/Hezkore/m2conio
 
 Namespace m2conio
 
@@ -9,8 +8,10 @@ Namespace m2conio
 #Import "<libc>"
 Using libc..
 Using std.filesystem
+Using std.geom
 
 Global Console:ConsoleHandler
+Global Ansi:AnsiHandler
 
 #If __TARGET__="windows"
 	#Import "<windows.h>"
@@ -33,7 +34,7 @@ Extern
 	Function getc:Int( stream:FILE Ptr )
 Public
 
-Struct ConsoleHandler
+Struct AnsiHandler
 	
 	Struct Color
 		
@@ -61,36 +62,11 @@ Struct ConsoleHandler
 		
 	End
 	
-	Enum Key
-		Any=-1
-	
-		Backspace=8,Tab
-		Enter=13
-		Escape=27
-		Space=32
-		Apostrophe=39
-		Comma=44,Minus,Period,Slash
-		Key0=48,Key1,Key2,Key3,Key4,Key5,Key6,Key7,Key8,Key9
-		Semicolon=59
-		Equals=61
-		A=65,B,C,D,E,F,G,H,I,J,K,L,M,N,O,P,Q,R,S,T,U,V,W,X,Y,Z
-		LeftBracket=91,Backslash,RightBracket
-		Backquote=96
-		a=97,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t,u,v,w,x,y,z
-		KeyDelete=127
-		
-		CapsLock=185,F1,F2,F3,F4,F5,F6,F7,F8,F9,F10,F11,F12
-		PrintScreen,ScrollLock,Pause,Insert,Home,PageUp,nop,KeyEnd,PageDown
-		Right,Left,Down,Up
-		KeypadNumLock,KeypadDivide,KeypadMultiply,KeypadMinus,KeypadPlus,KeypadEnter
-		Keypad1,Keypad2,Keypad3,Keypad4,Keypad5,Keypad6,Keypad7,Keypad8,Keypad9,Keypad0
-		KeypadPeriod
-		
-		LeftControl=$e0+$80,LeftShift,LeftAlt,LeftGui,RightControl,RightShift,RightAlt,RightGui
-		
-		Mode=$101+$80,AudioNext,AudioPrev,AudioStop,AudioPlay,AudioMute,MediaSelect,WWW,Mail,Calculator,Computer
-		ACSearch,ACHome,ACBack,ACForward,ACStop,ACRefresh,ACBookmarks
-		BrightnessDown,BrightnessUp,DisplaySwitch,IllumToggle,IllumDown,IllumUp,Eject,Sleep
+	#rem Check for Ansi code support
+	#end
+	Property Supported:Bool()
+		CheckSupport( False )
+		Return _supportsAnsi
 	End
 	
 	#rem monkeydoc Text foreground color.
@@ -152,12 +128,51 @@ Struct ConsoleHandler
 		ApplyBackground()
 	End
 	
-	#rem Check for Ansi code support
+	#rem monkeydoc Cursor position.
 	#end
-	Property SupportsAnsi:Bool()
+	Property CursorPosition:Vec2i()
+		Code( "[6n" ) ' Request position
+		If Not _supportsAnsi Then Return New Vec2i()
 		
-		CheckAnsiSupport( False )
-		Return _supportsAnsi
+		' Capture return
+		Local result:String
+		Local k:Int
+		Local split:String[]
+		
+		While kbhit()
+			k=getch()
+			If k>=32 Then result+=String.FromChar( k )
+		Wend
+		
+		' Trim
+		result=result.Slice( 1 ).Slice( 0, -1 )
+		
+		' Split
+		split=result.Split(";")
+		
+		' Flip X and Y
+		Return New Vec2i( Int(split[1]), Int(split[0]) )
+	Setter( pos:Vec2i )
+		' Notice that X and Y are flipped
+		Code( "["+pos.Y+";"+pos.X+"H" )
+	End
+	
+	#rem monkeydoc Cursor position.
+	Some consoles have a very large buffer size and so height can not always be trusted.
+	#end
+	Property Size:Vec2i()
+		' This seems dirty to me, but a lot of programs do it
+		' Basically it moves the cursor as far as it can
+		' That position is then its size
+		' Then returns cursor to old position
+		
+		Local oldPos:Vec2i=CursorPosition
+		CursorPosition=New Vec2i(32767,32767)
+		
+		Local newPos:Vec2i=CursorPosition
+		CursorPosition=oldPos
+		
+		Return newPos
 	End
 	
 	#Rem Hardly ever supported properly
@@ -176,20 +191,59 @@ Struct ConsoleHandler
 	End
 	#end
 	
+	#rem monkeydoc Send raw Ansi code.
+	#end
+	Method Code( code:String )
+		CheckSupport()
+		
+		If _supportsAnsi Then
+			fputs( String.FromChar(27)+code, libc.stdout )
+		Endif
+	End
+	
 	#rem monkeydoc Send raw Ansi color code.
 	ESC[<color>m
 	#end
-	Method AnsiColor( color:UByte )
+	Method RawColor( color:UByte )
 		
-		Ansi( "["+color+"m")
+		Code( "["+color+"m")
 	End
 	
-	#rem monkeydoc Send raw Ansi code.
+	#rem monkeydoc Clear screen.
 	#end
-	Method Ansi( code:String )
+	Method Clear()
 		
-		fputs( String.FromChar(27)+code, libc.stdout )
+		Code( "[2J" )
 	End
+	
+	#rem monkeydoc Console window title.
+	#end
+	Method SetTitle( name:String )
+		
+		Code( "]2;"+name+String.FromChar(7) )
+	End
+	
+	#rem monkeydoc Switch to a new alternate screen buffer.
+	#end
+	Method AltBuffer()
+		
+		Code( "[?1049h" )
+	End
+	
+	#rem monkeydoc Switch to main buffer.
+	#end
+	Method MainBuffer()
+		
+		Code( "[?1049l" )
+	End
+	
+	#rem monkeydoc Sets the VT scrolling margins of the viewport.
+	#end
+	Method ScrollingRegion( s:UInt, e:UInt )
+		
+		Code( "["+s+";"+e+"r" )
+	End
+
 	
 	#rem monkeydoc Reset foreground and background color.
 	#end
@@ -218,6 +272,158 @@ Struct ConsoleHandler
 		_boldBackground=False
 		
 		ApplyBackground()
+	End
+	
+	Private
+		Method CheckSupport:Bool( verbose:Bool=True )
+			If _ansiChecked Then Return _supportsAnsi
+			_ansiChecked=True
+			
+			#If __TARGET__="windows"
+				Local printErrorCode:Bool
+				
+				' Force/Disable Ansi support?
+				For Local s:=Eachin AppArgs()
+					
+					' Force Ansi support
+					If s.ToLower()="-fa" Then
+						_supportsAnsi=True
+					Endif
+					
+					' Disable Ansi support
+					If s.ToLower()="-da" Then
+						_supportsAnsi=False
+					Endif
+					
+					' Print any Ansi error code
+					If s.ToLower()="-pae" Then
+						printErrorCode=True
+					Endif
+					
+				Next
+				
+				' Attempt to get the STD handle...
+				' STD_OUTPUT_HANDLE (DWORD)-11
+				Local hOut:=GetStdHandle( -11 )
+				
+				If Int(hOut)=-1 Or GetLastError() Then
+					If verbose Then Print "Unable to get handle for this console"
+				Else
+					' Attempt to set the console mode...
+					' ENABLE_PROCESSED_OUTPUT 0x0001
+					' ENABLE_VIRTUAL_TERMINAL_PROCESSING 0x0004
+					SetConsoleMode( hOut, $0001|$0004 )
+				Endif
+				
+				If GetLastError() Then
+					
+					Select GetLastError()
+						Case 6 ' Wasn't able to get the handle for Std Handle
+							If verbose Print "Unable to use the console handle. Ansi will not be supported"
+						Case 87 ' Usually happens on older Windows CMD
+							If verbose Print "This console is too old to support Ansi escape codes"
+						Case 1150 ' Seems to happen on things like ConEmu
+							' It still usually works, so force support
+							_supportsAnsi=True
+						Default ' No idea what happened
+							If verbose Print "Unable to enable Ansi escape codes on this console"
+					End
+					
+					' Do we print error code?
+					If Not _supportsAnsi And printErrorCode Then
+						Print "Error Code: "+GetLastError()
+					Endif
+					
+				Else
+					' Ansi supported!
+					_supportsAnsi=True
+					ResetColors()
+				Endif
+			#Else
+				_supportsAnsi=True
+				ResetColors()
+			#Endif
+			
+			Return _supportsAnsi
+		End
+		
+		Method ApplyForeground()
+			
+			CheckSupport()
+			
+			If _supportsAnsi Then
+				
+				If _underlineForeground Then
+					RawColor( 4 )
+				Else
+					RawColor( 24 )
+				Endif
+				
+				If _boldForeground And _foreground.id>=30 And _foreground.id<38 Then
+					RawColor( _foreground.id+60 )
+				Else
+					RawColor( _foreground.id )
+				Endif
+				
+			Endif
+		End
+		
+		Method ApplyBackground()
+			
+			CheckSupport()
+			
+			If _supportsAnsi Then
+				If _boldBackground And _background.id>=30 And _background.id<38 Then
+					RawColor( _background.id+70 )
+				Else
+					RawColor( _background.id+10 )
+				Endif
+			Endif
+		End
+		
+		Field _foreground:Color
+		Field _boldForeground:Bool
+		Field _underlineForeground:Bool
+		Field _background:Color
+		Field _boldBackground:Bool
+		
+		Field _supportsAnsi:Bool
+		Field _ansiChecked:Bool
+	Public
+End
+
+Struct ConsoleHandler
+	
+	Enum Key
+		Any=-1
+	
+		Backspace=8,Tab
+		Enter=13
+		Escape=27
+		Space=32
+		Apostrophe=39
+		Comma=44,Minus,Period,Slash
+		Key0=48,Key1,Key2,Key3,Key4,Key5,Key6,Key7,Key8,Key9
+		Semicolon=59
+		Equals=61
+		A=65,B,C,D,E,F,G,H,I,J,K,L,M,N,O,P,Q,R,S,T,U,V,W,X,Y,Z
+		LeftBracket=91,Backslash,RightBracket
+		Backquote=96
+		a=97,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t,u,v,w,x,y,z
+		KeyDelete=127
+		
+		CapsLock=185,F1,F2,F3,F4,F5,F6,F7,F8,F9,F10,F11,F12
+		PrintScreen,ScrollLock,Pause,Insert,Home,PageUp,nop,KeyEnd,PageDown
+		Right,Left,Down,Up
+		KeypadNumLock,KeypadDivide,KeypadMultiply,KeypadMinus,KeypadPlus,KeypadEnter
+		Keypad1,Keypad2,Keypad3,Keypad4,Keypad5,Keypad6,Keypad7,Keypad8,Keypad9,Keypad0
+		KeypadPeriod
+		
+		LeftControl=$e0+$80,LeftShift,LeftAlt,LeftGui,RightControl,RightShift,RightAlt,RightGui
+		
+		Mode=$101+$80,AudioNext,AudioPrev,AudioStop,AudioPlay,AudioMute,MediaSelect,WWW,Mail,Calculator,Computer
+		ACSearch,ACHome,ACBack,ACForward,ACStop,ACRefresh,ACBookmarks
+		BrightnessDown,BrightnessUp,DisplaySwitch,IllumToggle,IllumDown,IllumUp,Eject,Sleep
 	End
 	
 	#rem monkeydoc Write to the console.
@@ -295,114 +501,4 @@ Struct ConsoleHandler
 	Method Bell()
 		fputs( String.FromChar(7), libc.stdout )
 	End
-	
-	Private
-		Method CheckAnsiSupport:Bool( verbose:Bool=True )
-			If _ansiChecked Then Return _supportsAnsi
-			_ansiChecked=True
-			
-			Local printErrorCode:Bool
-			
-			' Force/Disable Ansi support?
-			For Local s:=Eachin AppArgs()
-				
-				' Force Ansi support
-				If s.ToLower()="-fa" Then
-					_supportsAnsi=True
-				Endif
-				
-				' Disable Ansi support
-				If s.ToLower()="-da" Then
-					_supportsAnsi=False
-				Endif
-				
-				' Print any Ansi error code
-				If s.ToLower()="-pae" Then
-					printErrorCode=True
-				Endif
-				
-			Next
-			
-			' Attempt to get the STD handle...
-			Local hOut:=GetStdHandle( -11 )
-			
-			If Int(hOut)=-1 Or GetLastError() Then
-				If verbose Then Print "Unable to get handle for this console"
-			Else
-				' Attempt to set the console mode...
-				SetConsoleMode( hOut, 5 )
-			Endif
-			
-			If GetLastError() Then
-				
-				Select GetLastError()
-					Case 6 ' Wasn't able to get the handle for Std Handle
-						If verbose Print "Unable to use the console handle. Ansi will not be supported"
-					Case 87 ' Usually happens on older Windows CMD
-						If verbose Print "This console is too old to support Ansi escape codes"
-					Case 1150 ' Seems to happen on things like ConEmu
-						' It still usually works, so force support
-						_supportsAnsi=True
-					Default ' No idea what happened
-						If verbose Print "Unable to enable Ansi escape codes on this console"
-				End
-				
-				' Do we print error code?
-				If Not _supportsAnsi And printErrorCode Then
-					Print "Error Code: "+GetLastError()
-				Endif
-				
-			Else
-				' Ansi supported!
-				_supportsAnsi=True
-				ResetColors()
-			Endif
-			
-			Return _supportsAnsi
-		End
-		
-		Method ApplyForeground()
-			
-			CheckAnsiSupport()
-			
-			If _supportsAnsi Then
-				
-				If _underlineForeground Then
-					AnsiColor( 4 )
-				Else
-					AnsiColor( 24 )
-				Endif
-				
-				If _boldForeground And _foreground.id>=30 And _foreground.id<38 Then
-					AnsiColor( _foreground.id+60 )
-				Else
-					AnsiColor( _foreground.id )
-				Endif
-				
-			Endif
-		End
-		
-		Method ApplyBackground()
-			
-			CheckAnsiSupport()
-			
-			If _supportsAnsi Then
-				If _boldBackground And _background.id>=30 And _background.id<38 Then
-					AnsiColor( _background.id+70 )
-				Else
-					AnsiColor( _background.id+10 )
-				Endif
-			Endif
-		End
-		
-		Field _foreground:Color
-		Field _boldForeground:Bool
-		Field _underlineForeground:Bool
-		Field _background:Color
-		Field _boldBackground:Bool
-		
-		Field _supportsAnsi:Bool
-		Field _ansiChecked:Bool
-		
-	Public
 End

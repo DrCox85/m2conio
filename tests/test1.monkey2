@@ -4,16 +4,21 @@
 ' So you'll need to run this from your 'products' folder
 
 #Import "<std>"
-#Import "<m2conio>"
+'#Import "<m2conio>"
+#Import "../m2conio"
 Using std..
 Using m2conio..
 
 Function Main()
 	
+	Print "CPos: "+Ansi.CursorPosition
+	Print "CSize: "+Ansi.Size
+	Print "CPos: "+Ansi.CursorPosition
+	
 	' Check if color is supported
 	Console.Write("Checking color support... ")
 	
-	If Console.SupportsAnsi Then
+	If Ansi.Supported Then
 		Print "Yay, you can see the colors!"
 	Else
 		Print "Aww, this console window doesn't support color~n"
@@ -28,8 +33,8 @@ Function Main()
 	Print "~nHello!"
 	
 	' Change the foreground and background color
-	Console.Foreground=Console.Color.Red
-	Console.Background=Console.Color.Black
+	Ansi.Foreground=Ansi.Color.Red
+	Ansi.Background=Ansi.Color.Black
 	
 	' Ask user for input
 	Local usrInput:String
@@ -39,27 +44,27 @@ Function Main()
 		Console.Write("Write something> ")
 		
 		' Input in bold colors
-		Console.ForegroundBold=True
+		Ansi.ForegroundBold=True
 		usrInput=Console.Input()
-		Console.ForegroundBold=False
+		Ansi.ForegroundBold=False
 	Wend
 	
 	' Change the foreground and background color
-	Console.Foreground=Console.Color.Blue
-	Console.Background=Console.Color.Yellow
+	Ansi.Foreground=Ansi.Color.Blue
+	Ansi.Background=Ansi.Color.Yellow
 	
 	' Display whatever the user previously input
 	Console.Write("You wrote: ")
 	
 	' In bold colors
-	Console.ForegroundBold=True
+	Ansi.ForegroundBold=True
 	Console.Write( usrInput, True ) 'With new line
-	Console.ForegroundBold=False
+	Ansi.ForegroundBold=False
 	
 	Sleep(0.5)
 	
 	' Reset colors
-	Console.ResetColors()
+	Ansi.ResetColors()
 	
 	' Make a bell sound
 	Console.Bell() 
@@ -68,7 +73,7 @@ Function Main()
 	Console.WaitKey( "~nPress return to exit~n", Console.Key.Enter ) 
 	
 	' Reset colors
-	Console.ResetColors()
+	Ansi.ResetColors()
 	
 	Console.Write("Bye!")
 	Sleep(1)
