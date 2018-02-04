@@ -1,4 +1,3 @@
-
 ' Make sure you build this as the "Console" type
 ' Ted2Go does not register any of this
 ' So you'll need to run this from your 'products' folder
@@ -10,10 +9,6 @@ Using std..
 Using m2conio..
 
 Function Main()
-	
-	Print "CPos: "+Ansi.CursorPosition
-	Print "CSize: "+Ansi.Size
-	Print "CPos: "+Ansi.CursorPosition
 	
 	' Check if color is supported
 	Console.Write("Checking color support... ")
@@ -45,7 +40,9 @@ Function Main()
 		
 		' Input in bold colors
 		Ansi.ForegroundBold=True
+		Ansi.Underline=True
 		usrInput=Console.Input()
+		Ansi.Underline=False
 		Ansi.ForegroundBold=False
 	Wend
 	
@@ -58,19 +55,18 @@ Function Main()
 	
 	' In bold colors
 	Ansi.ForegroundBold=True
-	Console.Write( usrInput, True ) 'With new line
-	Ansi.ForegroundBold=False
-	
-	Sleep(0.5)
+	Console.Write( usrInput )
 	
 	' Reset colors
 	Ansi.ResetColors()
+	
+	Sleep( 0.5 )
 	
 	' Make a bell sound
 	Console.Bell() 
 	
 	' Wait for the user to press return
-	Console.WaitKey( "~nPress return to exit~n", Console.Key.Enter ) 
+	Console.WaitKey( "~n~nPress return to exit~n", Console.Key.Enter ) 
 	
 	' Reset colors
 	Ansi.ResetColors()

@@ -93,16 +93,14 @@ Struct AnsiHandler
 		ApplyForeground()
 	End
 	
-	#rem Not often properly supported
-	Property ForegroundUnderline:Bool()
-		Return _underlineForeground
+	Property Underline:Bool()
+		Return _underline
 	Setter( underline:Bool )
-		If _underlineForeground=underline Then Return
-		_underlineForeground=underline
+		If _underline=underline Then Return
+		_underline=underline
 		
 		ApplyForeground()
 	End
-	#end
 	
 	#rem monkeydoc Text background color.
 	Uses Ansi codes.
@@ -128,54 +126,54 @@ Struct AnsiHandler
 		ApplyBackground()
 	End
 	
-	#rem monkeydoc Cursor position.
-	#end
-	Property CursorPosition:Vec2i()
-		Code( "[6n" ) ' Request position
-		If Not _supportsAnsi Then Return New Vec2i()
-		
-		' Capture return
-		Local result:String
-		Local k:Int
-		Local split:String[]
-		
-		While kbhit()
-			k=getch()
-			If k>=32 Then result+=String.FromChar( k )
-		Wend
-		
-		' Trim
-		result=result.Slice( 1 ).Slice( 0, -1 )
-		
-		' Split
-		split=result.Split(";")
-		
-		' Flip X and Y
-		Return New Vec2i( Int(split[1]), Int(split[0]) )
-	Setter( pos:Vec2i )
-		' Notice that X and Y are flipped
-		Code( "["+pos.Y+";"+pos.X+"H" )
-	End
+'	#rem monkeydoc Cursor position.
+'	#end
+'	Property CursorPosition:Vec2i()
+'		Code( "[6n" ) ' Request position
+'		If Not _supportsAnsi Then Return New Vec2i()
+'		
+'		' Capture return
+'		Local result:String
+'		Local k:Int
+'		Local split:String[]
+'		
+'		While kbhit()
+'			k=getch()
+'			If k>=32 Then result+=String.FromChar( k )
+'		Wend
+'		
+'		' Trim
+'		result=result.Slice( 1 ).Slice( 0, -1 )
+'		
+'		' Split
+'		split=result.Split(";")
+'		
+'		' Flip X and Y
+'		Return New Vec2i( Int(split[1]), Int(split[0]) )
+'	Setter( pos:Vec2i )
+'		' Notice that X and Y are flipped
+'		Code( "["+pos.Y+";"+pos.X+"H" )
+'	End
+'	
+'	#rem monkeydoc Cursor position.
+'	Some consoles have a very large buffer size and so height can not always be trusted.
+'	#end
+'	Property Size:Vec2i()
+'		' This seems dirty to me, but a lot of programs do it
+'		' Basically it moves the cursor as far as it can
+'		' That position is then its size
+'		' Then returns cursor to old position
+'		
+'		Local oldPos:Vec2i=CursorPosition
+'		CursorPosition=New Vec2i(32767,32767)
+'		
+'		Local newPos:Vec2i=CursorPosition
+'		CursorPosition=oldPos
+'		
+'		Return newPos
+'	End
 	
-	#rem monkeydoc Cursor position.
-	Some consoles have a very large buffer size and so height can not always be trusted.
-	#end
-	Property Size:Vec2i()
-		' This seems dirty to me, but a lot of programs do it
-		' Basically it moves the cursor as far as it can
-		' That position is then its size
-		' Then returns cursor to old position
-		
-		Local oldPos:Vec2i=CursorPosition
-		CursorPosition=New Vec2i(32767,32767)
-		
-		Local newPos:Vec2i=CursorPosition
-		CursorPosition=oldPos
-		
-		Return newPos
-	End
-	
-	#Rem Hardly ever supported properly
+	#Rem
 	Method Negative()
 		
 		CheckColorSupport()
@@ -259,7 +257,7 @@ Struct AnsiHandler
 		
 		_foreground.id=39
 		_boldForeground=False
-		_underlineForeground=False
+		_underline=False
 		
 		ApplyForeground()
 	End
@@ -349,43 +347,58 @@ Struct AnsiHandler
 		
 		Method ApplyForeground()
 			
-			CheckSupport()
+			If Not CheckSupport() Then Return
 			
-			If _supportsAnsi Then
-				
-				If _underlineForeground Then
+			If _lastUnderline<>_underline Then
+				If _underline Then
 					RawColor( 4 )
 				Else
 					RawColor( 24 )
 				Endif
 				
+				_lastUnderline=_underline
+			Endif
+			
+			If _lastForeground<>_foreground Or _lastBoldForeground<>_boldForeground Then
 				If _boldForeground And _foreground.id>=30 And _foreground.id<38 Then
 					RawColor( _foreground.id+60 )
 				Else
 					RawColor( _foreground.id )
 				Endif
 				
+				_lastForeground=_foreground
+				_lastBoldForeground=_boldForeground
 			Endif
 		End
 		
 		Method ApplyBackground()
 			
-			CheckSupport()
+			If Not CheckSupport() Then Return
 			
-			If _supportsAnsi Then
+			If _lastBackground<>_background Or _lastBoldBackground<>_boldBackground Then
 				If _boldBackground And _background.id>=30 And _background.id<38 Then
 					RawColor( _background.id+70 )
 				Else
 					RawColor( _background.id+10 )
 				Endif
+				
+				_lastBackground=_background
+				_lastBoldBackground=_boldBackground
 			Endif
 		End
 		
 		Field _foreground:Color
 		Field _boldForeground:Bool
-		Field _underlineForeground:Bool
+		Field _lastForeground:Color
+		Field _lastBoldForeground:Bool
+		
+		Field _underline:Bool
+		Field _lastUnderline:Bool
+		
 		Field _background:Color
 		Field _boldBackground:Bool
+		Field _lastBackground:Color
+		Field _lastBoldBackground:Bool
 		
 		Field _supportsAnsi:Bool
 		Field _ansiChecked:Bool
@@ -398,7 +411,11 @@ Struct ConsoleHandler
 		Any=-1
 	
 		Backspace=8,Tab
-		Enter=13
+		#If __TARGET__="windows"
+			Enter=13
+		#Else
+			Enter=10
+		#Endif
 		Escape=27
 		Space=32
 		Apostrophe=39
@@ -445,29 +462,20 @@ Struct ConsoleHandler
 		Write(text)
 		
 		If key>=0 Then
-			Repeat 
-			Until GetKey()=key
+			Repeat
+			Until KeyHit()=key
 		Else
-			GetKey()
+			KeyHit()
 		Endif
 		
 		Return
 	End
 	
 	#rem monkeydoc Returns true if a key was hit.
-	Use with GetKey() to determine what key was hit.
 	#end
-	Method KeyHit:Bool()
-		
-		Return kbhit()
-	End
-	
-	#rem monkeydoc Pause application and let the user input a key.
-	Can be used with KeyHit() to remove pause.
-	#end
-	Method GetKey:Int()
-		
-		Return getch()
+	Method KeyHit:Int()
+		If kbhit() Then Return getch()
+		Return 0
 	End
 	
 	#rem monkeydoc Pause application and let the user input a line of text.
@@ -477,7 +485,7 @@ Struct ConsoleHandler
 		Local inp:Int
 		Local result:String
 		
-		While True
+		Repeat
 			
 			inp=getc( libc.stdin )
 			If inp Then
@@ -490,7 +498,7 @@ Struct ConsoleHandler
 					result+=String.FromChar( inp )
 				Endif
 			Endif
-		Wend
+		Forever
 		
 		Return result
 	End
