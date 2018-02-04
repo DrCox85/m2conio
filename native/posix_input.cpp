@@ -1,5 +1,6 @@
 #include <termios.h>
 #include <stdio.h>
+#include <sys/ioctl.h>
 #include "posix_input.h"
 
 static struct termios told, tnew;
