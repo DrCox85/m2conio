@@ -1,4 +1,4 @@
-# m2libcext.git
+# m2conio.git
 A Console I/O module for Monkey2.
 
 ![](https://github.com/Hezkore/m2conio/blob/master/tests/demo.png)
